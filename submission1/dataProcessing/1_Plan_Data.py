@@ -10,7 +10,7 @@ full_ma_data = pd.DataFrame()
 
 for y in range(y_start, y_end+1):
     # Basic contract/plan information
-    ma_path = f"data/input/monthly-ma-and-pdp-enrollment-by-cpsc/CPSC_Contract_Info_{y}_01.csv"
+    ma_path = f"data/input/planData/CPSC_Enrollment_{y}_01/CPSC_Contract_Info_{y}_01.csv"
     contract_info = pd.read_csv(ma_path, skiprows=1, encoding='latin1', names=[
         "contractid", "planid", "org_type", "plan_type", "partd", "snp", "eghp", "org_name",
         "org_marketing_name", "plan_name", "parent_org", "contract_date"
@@ -33,7 +33,7 @@ for y in range(y_start, y_end+1):
     contract_info = contract_info[contract_info['id_count'] == 1].drop(columns=['id_count'])
 
     # Enrollments per plan
-    ma_path = f"data/input/monthly-ma-and-pdp-enrollment-by-cpsc/CPSC_Enrollment_Info_{y}_01.csv"
+    ma_path = f"data/input/planData/CPSC_Enrollment_{y}_01/CPSC_Enrollment_Info_{y}_01.csv"
     enroll_info = pd.read_csv(ma_path, skiprows=1, names=[
         "contractid", "planid", "ssa", "fips", "state", "county", "enrollment"
     ], dtype={
