@@ -10,8 +10,8 @@ with open("data/output/rating_variables.pkl", "rb") as f:
     rating_vars = pickle.load(f)
 
 # 2008 STAR RATING DATA
-ma_path_2008a = "data/input/ma-star-ratings/2008/2008_Part_C_Report_Card_Master_Table_2009_11_30_stars.csv"
-ma_path_2008b = "data/input/ma-star-ratings/2008/2008_Part_C_Report_Card_Master_Table_2009_11_30_domain.csv"
+ma_path_2008a = "data/input/ratingsData/2008_Plan_Ratings/2008 Plan Ratings Spring Release (04_2008)/2008_Part_D_Report_Card_Master_Table_2008_03_14_star.csv"
+ma_path_2008b = "data/input/ratingsData/2008_Plan_Ratings/2008 Plan Ratings Spring Release (04_2008)/2008_Part_D_Report_Card_Master_Table_2008_03_14_domain.csv"
 
 # Read first file using rating variables from 2008
 star_data_2008a = pd.read_csv(ma_path_2008a, skiprows=4, names=rating_vars["2008"], encoding='latin1')
