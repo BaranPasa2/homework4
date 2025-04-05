@@ -73,4 +73,4 @@ for year, months in monthlists.items():
 ma_penetration_all = pd.concat(all_years, ignore_index=True)
 
 # Save final dataset
-ma_penetration_all.to_csv("data/output/ma_penetration.csv", index=F
+ma_penetration_all.to_csv("data/output/ma_penetration.csv", index=False)
