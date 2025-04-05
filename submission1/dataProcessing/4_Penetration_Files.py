@@ -18,7 +18,7 @@ for year, months in monthlists.items():
     monthly_data = []
 
     for month in months:
-        ma_path = f"data/input/monthly-ma-state-and-county-penetration/State_County_Penetration_MA_{year}_{month}.csv"
+        ma_path = f"data/input/penetration/State_County_Penetration_MA_{year}_01/State_County_Penetration_MA_{year}_01.csv"
 
         df = pd.read_csv(
             ma_path,

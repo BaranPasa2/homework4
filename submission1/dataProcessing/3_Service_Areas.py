@@ -20,7 +20,7 @@ for y in range(y_start, y_end+1):
     for m in monthlist:
         # Pull service area data by contract/month
         m = str(m).rjust(2, '0')
-        ma_path = f"data/input/monthly-ma-contract-service-area/MA_Cnty_SA_{y}_{m}.csv"
+        ma_path = f"data/input/serviceArea/MA_Cnty_SA_{y}_01/MA_Cnty_SA_{y}_01.csv"
         service_area = pd.read_csv(ma_path, skiprows=1, names=[
             "contractid", "org_name", "org_type", "plan_type", "partial", "eghp",
             "ssa", "fips", "county", "state", "notes"
