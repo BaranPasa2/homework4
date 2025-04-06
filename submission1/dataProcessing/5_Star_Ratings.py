@@ -315,29 +315,4 @@ star_data_2015b = pd.read_csv(ma_path_2015b, skiprows=2, usecols=range(10), name
 
 # Process summary fields
 star_data_2015b["new_contract"] = (
-    (star_data_2015b["partc_score"] == "Plan too new to be measured") |
-    (star_data_2015b["partcd_score"] == "Plan too new to be measured")
-).astype(int)
-
-star_data_2015b["partc_score"] = pd.to_numeric(star_data_2015b["partc_score"], errors="coerce")
-star_data_2015b["partcd_score"] = pd.to_numeric(star_data_2015b["partcd_score"], errors="coerce")
-star_data_2015b = star_data_2015b[["contractid", "new_contract", "partc_score", "partcd_score"]]
-
-# Merge and tag year
-star_data_2015 = pd.merge(star_data_2015a, star_data_2015b, on="contractid", how="left")
-star_data_2015["year"] = 2015
-
-
-
-# Combine all star ratings
-star_ratings = pd.concat([
-    star_data_2008, star_data_2009, star_data_2010, star_data_2011,
-    star_data_2012, star_data_2013, star_data_2014, star_data_2015
-], ignore_index=True)
-
-# Ensure new_contract column exists
-if "new_contract" not in star_ratings.columns:
-    star_ratings["new_contract"] = pd.NA
-
-# Save csv
-star_ratings.to_csv("data/output/star_ratings.csv", index=False)
+    (star_data_2015b["partc_score"] == "Plan too new to be m
