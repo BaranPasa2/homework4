@@ -12,21 +12,21 @@ warnings.simplefilter('ignore')
 
 # Call individual scripts -------------------------------------------------
 
-print("\n1) Read in enrollment data for January of each year...")
-exec(open("submission1/dataProcessing/1_Plan_Data.py").read())
+# print("\n1) Read in enrollment data for January of each year...")
+# exec(open("submission1/dataProcessing/1_Plan_Data.py").read())
 
-print("\n3) Read in service area data...")
-exec(open("submission1/dataProcessing/3_Service_Areas.py").read())
+# print("\n3) Read in service area data...")
+# exec(open("submission1/dataProcessing/3_Service_Areas.py").read())
 
-print("\n4) Read in market pentration data...")
-exec(open("submission1/dataProcessing/4_Penetration_Files.py").read())
+# print("\n4) Read in market pentration data...")
+# exec(open("submission1/dataProcessing/4_Penetration_Files.py").read())
 
-print("\n5) Read in MA star rating data ...")
-exec(open("submission1/dataProcessing/rating_variables.py").read())
-exec(open("submission1/dataProcessing/5_Star_Ratings.py").read())
+# print("\n5) Read in MA star rating data ...")
+# exec(open("submission1/dataProcessing/rating_variables.py").read())
+# exec(open("submission1/dataProcessing/5_Star_Ratings.py").read())
 
-print("\n7) Read in final benchmark rates...")
-exec(open("submission1/dataProcessing/7_MA_Benchmark.py").read())
+# print("\n7) Read in final benchmark rates...")
+# exec(open("submission1/dataProcessing/7_MA_Benchmark.py").read())
 
 
 # Load the datasets
