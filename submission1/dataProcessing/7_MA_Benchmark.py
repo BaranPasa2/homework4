@@ -6,15 +6,15 @@ import pandas as pd
 
 # Define file paths
 bench_paths = {
-    2007: "data/input/ma-benchmarks/ratebook2007/countyrate2007.csv",
-    2008: "data/input/ma-benchmarks/ratebook2008/countyrate2008.csv",
-    2009: "data/input/ma-benchmarks/ratebook2009/countyrate2009.csv",
-    2010: "data/input/ma-benchmarks/ratebook2010/CountyRate2010.csv",
-    2011: "data/input/ma-benchmarks/ratebook2011/CountyRate2011.csv",
-    2012: "data/input/ma-benchmarks/ratebook2012/CountyRate2012.csv",
-    2013: "data/input/ma-benchmarks/ratebook2013/CountyRate2013.csv",
-    2014: "data/input/ma-benchmarks/ratebook2014/CountyRate2014.csv",
-    2015: "data/input/ma-benchmarks/ratebook2015/CSV/CountyRate2015.csv"
+    2007: "data/input/rateBooks/ratebook2007/countyrate2007.csv",
+    2008: "data/input/rateBooks/ratebook2008/countyrate2008.csv",
+    2009: "data/input/rateBooks/ratebook2009/countyrate2009.csv",
+    2010: "data/input/rateBooks/ratebook2010/CountyRate2010.csv",
+    2011: "data/input/rateBooks/ratebook2011/CountyRate2011.csv",
+    2012: "data/input/rateBooks/ratebook2012/CountyRate2012.csv",
+    2013: "data/input/rateBooks/RateBook2013/CountyRate2013.csv",
+    2014: "data/input/rateBooks/ratebook2014/CountyRate2014 Revised PR.csv",
+    2015: "data/input/rateBooks/RateBook2015/CSV/CountyRate2015.csv"
 }
 
 # Drop rows at beginning for each file

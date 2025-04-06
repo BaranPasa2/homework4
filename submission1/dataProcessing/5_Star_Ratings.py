@@ -35,7 +35,7 @@ star_data_2008["year"] = 2008
 
 
 # 2009 STAR RATING DATA
-ma_path_2009a = "data/input/ma-star-ratings/2009/2009_Part_C_Report_Card_Master_Table_2009_11_30_stars.csv"
+ma_path_2009a = "data/input/ratingsData/2009_Plan_Ratings/2009 Plan Ratings Spring Release (04_2009)/2009_Part_D_Report_Card_Master_Table_2009_04_15_star.csv"
 star_data_2009a = pd.read_csv(ma_path_2009a, skiprows=4, names=rating_vars["2009"], encoding='latin1')
 
 # Replace star labels with numeric strings
@@ -53,7 +53,7 @@ cols_to_convert = star_data_2009a.columns.difference(["contractid", "org_type", 
 star_data_2009a[cols_to_convert] = star_data_2009a[cols_to_convert].apply(pd.to_numeric, errors="coerce")
 
 # Read summary data
-ma_path_2009b = "data/input/ma-star-ratings/2009/2009_Part_C_Report_Card_Master_Table_2009_11_30_summary.csv"
+ma_path_2009b = "data/input/ratingsData/2009_Plan_Ratings/2009 Plan Ratings Spring Release (04_2009)/2009_Part_D_Report_Card_Master_Table_2009_04_15_summary.csv"
 star_data_2009b = pd.read_csv(ma_path_2009b, skiprows=2, names=[
     "contractid", "org_type", "contract_name", "org_marketing", "partc_score"
 ], encoding='latin1')
@@ -79,7 +79,7 @@ star_data_2009["year"] = 2009
 
 
 # 2010 STAR RATING DATA
-ma_path_2010a = "data/input/ma-star-ratings/2010/2010_Part_C_Report_Card_Master_Table_2009_11_30_domain.csv"
+ma_path_2010a = "data/input/ratingsData/2010_Plan_Ratings_and_Display_Measures/2010 Plan Ratings (10_2009)/2010_Part_C_Report_Card_Master_Table_2009_11_30_domain.csv"
 star_data_2010a = pd.read_csv(ma_path_2010a, skiprows=4, names=rating_vars["2010"], encoding='latin1')
 
 # Replace star labels with numeric
@@ -98,7 +98,7 @@ cols_to_numeric = star_data_2010a.columns.difference(cols_to_keep)
 star_data_2010a[cols_to_numeric] = star_data_2010a[cols_to_numeric].apply(pd.to_numeric, errors="coerce")
 
 # Load summary data
-ma_path_2010b = "data/input/ma-star-ratings/2010/2010_Part_C_Report_Card_Master_Table_2009_11_30_summary.csv"
+ma_path_2010b = "data/input/ratingsData/2010_Plan_Ratings_and_Display_Measures/2010 Plan Ratings (10_2009)/2010_Part_C_Report_Card_Master_Table_2009_11_30_summary.csv"
 star_data_2010b = pd.read_csv(ma_path_2010b, skiprows=2, names=[
     "contractid", "org_type", "contract_name", "org_marketing", "partc_score"
 ], encoding='latin1')
@@ -125,7 +125,7 @@ star_data_2010["year"] = 2010
 
 
 # 2011 STAR RATING DATA
-ma_path_2011a = "data/input/ma-star-ratings/2011/2011_Part_C_Report_Card_Master_Table_2011_04_20_star.csv"
+ma_path_2011a = "data/input/ratingsData/2011_Plan_Ratings_and_Display_Measures/2011 Plan Ratings Spring Release (04_2011)/2011_Part_C_Report_Card_Master_Table_2011_04_20_star.csv"
 star_data_2011a = pd.read_csv(ma_path_2011a, skiprows=5, names=rating_vars["2011"], encoding='latin1')
 
 # Replace star labels with numeric
@@ -144,7 +144,7 @@ cols_to_numeric_2011 = star_data_2011a.columns.difference(cols_to_keep_2011)
 star_data_2011a[cols_to_numeric_2011] = star_data_2011a[cols_to_numeric_2011].apply(pd.to_numeric, errors="coerce")
 
 # Read summary data
-ma_path_2011b = "data/input/ma-star-ratings/2011/2011_Part_C_Report_Card_Master_Table_2011_04_20_summary.csv"
+ma_path_2011b = "data/input/ratingsData/2011_Plan_Ratings_and_Display_Measures/2011 Plan Ratings Spring Release (04_2011)/2011_Part_C_Report_Card_Master_Table_2011_04_20_summary.csv"
 summary_cols_2011 = ["contractid", "org_type", "contract_name", "org_marketing",
                      "partc_lowstar", "partc_score", "partcd_score"]
 star_data_2011b = pd.read_csv(ma_path_2011b, skiprows=2, names=summary_cols_2011, encoding='latin1')
@@ -178,7 +178,7 @@ star_data_2011["year"] = 2011
 
 
 # 2012 STAR RATING DATA
-ma_path_2012a = "data/input/ma-star-ratings/Part C 2012 Fall/2012_Part_C_Report_Card_Master_Table_2011_11_01_Star.csv"
+ma_path_2012a = "data/input/ratingsData/2012_Plan_Ratings_and_Display_Measures/2012 Plan Ratings Spring Release (04_2012)/2012_Part_C_Report_Card_Master_Table_2012_04_02_Star.csv"
 star_data_2012a = pd.read_csv(ma_path_2012a, skiprows=5, names=rating_vars["2012"], encoding='latin1')
 
 # Convert columns to numeric except IDs and org metadata
@@ -187,7 +187,7 @@ cols_to_numeric_2012 = star_data_2012a.columns.difference(id_vars_2012)
 star_data_2012a[cols_to_numeric_2012] = star_data_2012a[cols_to_numeric_2012].apply(pd.to_numeric, errors="coerce")
 
 # Read summary data
-ma_path_2012b = "data/input/ma-star-ratings/Part C 2012 Fall/2012_Part_C_Report_Card_Master_Table_2011_11_01_Summary.csv"
+ma_path_2012b = "data/input/ratingsData/2012_Plan_Ratings_and_Display_Measures/2012 Plan Ratings Spring Release (04_2012)/2012_Part_C_Report_Card_Master_Table_2012_04_02_Summary.csv"
 summary_cols_2012 = [
     "contractid", "org_type", "org_parent", "org_marketing",
     "partc_score", "partc_lowscore", "partc_highscore",
@@ -224,8 +224,8 @@ star_data_2012["year"] = 2012
 
 
 # 2013 STAR RATING DATA
-ma_path_2013a = "data/input/ma-star-ratings/Part C 2013 Fall/2013_Part_C_Report_Card_Master_Table_2012_10_17_Star.csv"
-ma_path_2013b = "data/input/ma-star-ratings/Part C 2013 Fall/2013_Part_C_Report_Card_Master_Table_2012_10_17_Summary.csv"
+ma_path_2013a = "data/input/ratingsData/2013_Plan_Ratings_and_Display_Measures/2013 Plan Ratings Spring Release (04_2013)/2013_Part D_Report_Card_Master_Table_2013_03_26_star.csv"
+ma_path_2013b = "data/input/ratingsData/2013_Plan_Ratings_and_Display_Measures/2013 Plan Ratings Spring Release (04_2013)/2013_Part D_Report_Card_Master_Table_2013_03_26_summary.csv"
 
 # Read the main dataset
 star_data_2013a = pd.read_csv(ma_path_2013a, skiprows=4, names=rating_vars["2013"], encoding='latin1')
@@ -261,8 +261,8 @@ star_data_2013["year"] = 2013
 
 
 # 2014 STAR RATING DATA
-ma_path_2014a = "data/input/ma-star-ratings/Part C 2014 Fall/2014_Part_C_Report_Card_Master_Table_2013_10_17_stars.csv"
-ma_path_2014b = "data/input/ma-star-ratings/Part C 2014 Fall/2014_Part_C_Report_Card_Master_Table_2013_10_17_summary.csv"
+ma_path_2014a = "data/input/ratingsData/2014_Star_Ratings_and_Display_Measures/2014 Star Ratings Spring Release (04_2014)/2014_Part_C_Report_Card_Master_Table_2014_04_02_stars.csv"
+ma_path_2014b = "data/input/ratingsData/2014_Star_Ratings_and_Display_Measures/2014 Star Ratings Spring Release (04_2014)/2014_Part_C_Report_Card_Master_Table_2014_04_02_summary.csv"
 
 # Read the stars data
 star_data_2014a = pd.read_csv(ma_path_2014a, skiprows=3, names=rating_vars["2014"], encoding='latin1')
@@ -296,8 +296,8 @@ star_data_2014["year"] = 2014
 
 
 # 2015 STAR RATING DATA
-ma_path_2015a = "data/input/ma-star-ratings/2015 Fall/2015_Report_Card_Master_Table_2014_10_03_stars.csv"
-ma_path_2015b = "data/input/ma-star-ratings/2015 Fall/2015_Report_Card_Master_Table_2014_10_03_summary.csv"
+ma_path_2015a = "data/input/ratingsData/2015_Star_Ratings_and_Display_Measures/2015 Star Ratings Spring Release (04_2015)/2015_Report_Card_Master_Table_2015_04_10_stars.csv"
+ma_path_2015b = "data/input/ratingsData/2015_Star_Ratings_and_Display_Measures/2015 Star Ratings Spring Release (04_2015)/2015_Report_Card_Master_Table_2015_04_10_summary.csv"
 
 # Read stars data
 star_data_2015a = pd.read_csv(ma_path_2015a, skiprows=4, usecols=range(38), names=rating_vars["2015"], encoding='latin1')
