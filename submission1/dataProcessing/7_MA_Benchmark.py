@@ -13,7 +13,7 @@ bench_paths = {
     2011: "data/input/rateBooks/ratebook2011/CountyRate2011.csv",
     2012: "data/input/rateBooks/ratebook2012/CountyRate2012.csv",
     2013: "data/input/rateBooks/RateBook2013/CountyRate2013.csv",
-    2014: "data/input/rateBooks/ratebook2014/CountyRate2014 Revised PR.csv",
+    2014: "data/input/rateBooks/ratebook2014/CountyRate2014.csv",
     2015: "data/input/rateBooks/RateBook2015/CSV/CountyRate2015.csv"
 }
 

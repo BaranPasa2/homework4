@@ -6,7 +6,7 @@ execute:
   echo: false
 format:
   pdf:
-    output-file: "pasa-b-hwk3-1"
+    output-file: "pasa-b-hwk4-1"
     output-exit: "pdf"
     code-fold: true
     highlight-style: github
@@ -224,6 +224,7 @@ for year in years_to_analyze:
 # Convert to DataFrame for easier plotting
 star_df = pd.DataFrame(star_rating_data)
 ```
+{{< pagebreak >}}
 
 #### 1
 
@@ -256,6 +257,7 @@ plt.tight_layout()
 plt.show()
 
 ```
+{{< pagebreak >}}
 
 #### 2
 Data not showing up for 2014 for some reason. 
@@ -306,6 +308,7 @@ plt.show()
 
 
 ```
+{{< pagebreak >}}
 
 #### 3
 ```{python}
