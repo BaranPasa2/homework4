@@ -6,7 +6,7 @@ execute:
   echo: false
 format:
   pdf:
-    output-file: "pasa-b-hwk3-3"
+    output-file: "pasa-b-hwk3-1"
     output-exit: "pdf"
     code-fold: true
     highlight-style: github
@@ -109,29 +109,69 @@ else:
 print("\nFinal filtered dataset shape:", filtered_df.shape)
 
 # Group by county and year to count plans
+# Group by county and year to count plans
 if all(col in filtered_df.columns for col in ['county', 'year']):
     county_year_plan_counts = filtered_df.groupby(['county', 'year']).size().reset_index(name='plan_count')
     
-    # Create a box and whisker plot showing the distribution of plan counts by county over time
+    # Set the style for a cleaner look
+    sns.set_style("whitegrid")
     plt.figure(figsize=(12, 8))
-    sns.boxplot(x='year', y='plan_count', data=county_year_plan_counts)
-    plt.title('Distribution of Medicare Advantage Plan Counts by County Over Time', fontsize=16)
-    plt.xlabel('Year', fontsize=14)
-    plt.ylabel('Number of Plans Per County', fontsize=14)
-    plt.grid(axis='y', linestyle='--', alpha=0.7)
-    plt.xticks(rotation=45)
     
-    # Add summary statistics to the plot
+    # Create a more polished box plot
+    ax = sns.boxplot(
+        x='year', 
+        y='plan_count', 
+        data=county_year_plan_counts,
+        palette="Blues",
+        width=0.6,
+        fliersize=3,
+        linewidth=1.5
+    )
+    
+    # Add a more descriptive title and labels with better formatting
+    plt.title('Distribution of Medicare Advantage Plans by County (2010-2015)', 
+              fontsize=16, fontweight='bold', pad=20)
+    plt.xlabel('Year', fontsize=14, labelpad=10)
+    plt.ylabel('Number of Plans Per County', fontsize=14, labelpad=10)
+    
+    # Improve the tick formatting
+    plt.xticks(rotation=0, fontsize=12)
+    plt.yticks(fontsize=12)
+    
+    # Add a light grid only on the y-axis for better readability
+    ax.grid(axis='y', linestyle='--', alpha=0.7)
+    
+    # Add a more concise summary of statistics as a table below
     years = sorted(county_year_plan_counts['year'].unique())
-    stats_text = ""
+    stats_data = []
+    
     for year in years:
         year_data = county_year_plan_counts[county_year_plan_counts['year'] == year]['plan_count']
-        stats_text += f"{year}: Med={year_data.median():.1f}, Mean={year_data.mean():.1f}, Min={year_data.min()}, Max={year_data.max()}\n"
+        stats_data.append([
+            year,
+            f"{year_data.median():.0f}",
+            f"{year_data.mean():.1f}",
+            f"{year_data.min():.0f}",
+            f"{year_data.max():.0f}"
+        ])
     
-    plt.figtext(0.15, 0.01, stats_text, fontsize=10)
+    # Create a nicely formatted table for the statistics
+    table = plt.table(
+        cellText=stats_data,
+        colLabels=['Year', 'Median', 'Mean', 'Min', 'Max'],
+        loc='bottom',
+        bbox=[0.15, -0.28, 0.7, 0.2],  # [left, bottom, width, height]
+        cellLoc='center'
+    )
+    table.auto_set_font_size(False)
+    table.set_fontsize(10)
+    table.scale(1, 1.5)  # Adjust table size for better readability
     
-    plt.tight_layout()
- #   plt.savefig('ma_plan_distribution_by_county.png', dpi=300)
+    # Adjust layout to make room for the table
+    plt.subplots_adjust(bottom=0.25)
+    
+    # Save the figure with higher quality
+ #   plt.savefig('ma_plan_distribution_by_county.png', dpi=300, bbox_inches='tight')
     plt.show()
     
     # Additional analysis: Calculate average plan count and changes over time
@@ -218,6 +258,7 @@ plt.show()
 ```
 
 #### 2
+Data not showing up for 2014 for some reason. 
 ```{python}
 # Figure 2: Average benchmark payment over time
 plt.figure(figsize=(12, 8))
@@ -255,8 +296,7 @@ else:
     plt.text(0.5, 0.5, 'No benchmark payment data found', 
              horizontalalignment='center', verticalalignment='center')
 
-plt.tight_layout()
-#plt.savefig('benchmark_payment_trend.png', dpi=300)
+plt.savefig('benchmark_payment_trend.png', dpi=300)
 plt.show()
 ```
 
