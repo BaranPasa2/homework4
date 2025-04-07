@@ -261,43 +261,50 @@ plt.show()
 Data not showing up for 2014 for some reason. 
 ```{python}
 # Figure 2: Average benchmark payment over time
+
+
 plt.figure(figsize=(12, 8))
-if 'ma_rate' in df.columns:
-    # Ensure ma_rate is numeric and handle NaN values
+
+if 'ma_rate' not in df.columns:
+    plt.text(0.5, 0.5, 'No benchmark payment data found',
+             ha='center', va='center')
+else:
+    # Convert to numeric and clean
     df['ma_rate'] = pd.to_numeric(df['ma_rate'], errors='coerce')
-    
-    # Group by year and calculate average benchmark (ignoring NaN values)
-    benchmark_by_year = df.groupby('year')['ma_rate'].mean().reset_index()
-    
-    # Plot benchmark trends
-    plt.plot(benchmark_by_year['year'], benchmark_by_year['ma_rate'], 
+    benchmark_by_year = df.groupby('year', as_index=False)['ma_rate'].mean()
+
+    # Ensure all years from 2010 to 2015 are present
+    all_years = pd.DataFrame({'year': range(2010, 2016)})
+    benchmark_by_year = pd.merge(all_years, benchmark_by_year, on='year', how='left')
+
+    # Plotting
+    plt.plot(benchmark_by_year['year'], benchmark_by_year['ma_rate'],
              marker='o', linestyle='-', linewidth=2)
-    plt.title('Average Benchmark Payment (2010-2015)', fontsize=16)
+    plt.title('Average Benchmark Payment (2010–2015)', fontsize=16)
     plt.xlabel('Year', fontsize=14)
     plt.ylabel('Average Benchmark Payment ($)', fontsize=14)
     plt.grid(True, linestyle='--', alpha=0.7)
-    
-    # Calculate the percentage increase from 2010 to 2015 if both values exist
-    if 2010 in benchmark_by_year['year'].values and 2015 in benchmark_by_year['year'].values:
-        start_value = benchmark_by_year[benchmark_by_year['year'] == 2010]['ma_rate'].values[0]
-        end_value = benchmark_by_year[benchmark_by_year['year'] == 2015]['ma_rate'].values[0]
-        percent_increase = ((end_value - start_value) / start_value) * 100
-        
-        # Add text showing percentage increase
-        plt.text(2012, benchmark_by_year['ma_rate'].max() * 0.9, 
-                f'Increase from 2010 to 2015: ${end_value - start_value:.2f} ({percent_increase:.1f}%)',
-                bbox=dict(facecolor='white', alpha=0.8))
-        
-        print("\nAverage Benchmark Payment by Year:")
-        for _, row in benchmark_by_year.iterrows():
-            print(f"  {row['year']}: ${row['ma_rate']:.2f}")
-        print(f"\nBenchmark payment increase from 2010 to 2015: ${end_value - start_value:.2f} ({percent_increase:.1f}%)")
-else:
-    plt.text(0.5, 0.5, 'No benchmark payment data found', 
-             horizontalalignment='center', verticalalignment='center')
 
-plt.savefig('benchmark_payment_trend.png', dpi=300)
+    # Calculate and annotate change from 2010 to 2015
+    if not pd.isna(benchmark_by_year.loc[benchmark_by_year['year'] == 2010, 'ma_rate'].values[0]) and \
+       not pd.isna(benchmark_by_year.loc[benchmark_by_year['year'] == 2015, 'ma_rate'].values[0]):
+        
+        start_val = benchmark_by_year.loc[benchmark_by_year['year'] == 2010, 'ma_rate'].values[0]
+        end_val = benchmark_by_year.loc[benchmark_by_year['year'] == 2015, 'ma_rate'].values[0]
+        percent_change = ((end_val - start_val) / start_val) * 100
+
+        note = f'Change from 2010 to 2015: ${end_val - start_val:.2f} ({percent_change:.1f}%)'
+        plt.text(2012, benchmark_by_year['ma_rate'].max() * 0.9 if benchmark_by_year['ma_rate'].max() else 800, 
+                 note, bbox=dict(facecolor='white', alpha=0.8))
+
+    # Print the data for verification
+    print("\nAverage Benchmark Payment by Year (including missing):")
+    print(benchmark_by_year.to_string(index=False, formatters={'ma_rate': '${:,.2f}'.format if pd.notna else str}))
+
+plt.savefig('benchmark_payment_trend_fixed.png', dpi=300)
 plt.show()
+
+
 ```
 
 #### 3
