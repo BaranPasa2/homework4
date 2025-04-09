@@ -57,3 +57,32 @@ plt.ylabel("Number of Plans")
 plt.title("Distribution of Running Variable in 2010")
 plt.show()
 
+# 6.
+
+# Load your data
+df = pd.read_csv("data/output/final_ma_data.csv", low_memory=False)
+
+# Filter for 2010
+df_2010 = df[df['year'] == 2010].copy()
+
+# Convert to numeric
+df_2010['partc_score'] = pd.to_numeric(df_2010['partc_score'], errors='coerce')
+df_2010['avg_enrollment'] = pd.to_numeric(df_2010['avg_enrollment'], errors='coerce')
+
+# Function to run RDD at a given cutoff
+def run_rdd_model(data, cutoff, bandwidth):
+    data_rdd = data[
+        (data['partc_score'] >= cutoff - bandwidth) &
+        (data['partc_score'] <= cutoff + bandwidth)
+    ][['partc_score', 'avg_enrollment']].dropna()
+
+    # Run RDD
+    print(f"\n=== RDD Summary at Cutoff {cutoff} ===")
+    model = rdd.rdd(data_rdd, 'partc_score', 'avg_enrollment', cut=cutoff)
+    print(model.fit().summary())
+
+
+
+# Run models at 3.0 and 3.5 cutoffs
+run_rdd_model(df_2010, 3.0, 0.125)
+run_rdd_model(df_2010, 3.5, 0.125)
