@@ -59,30 +59,39 @@ plt.show()
 
 # 6.
 
-# Load your data
-df = pd.read_csv("data/output/final_ma_data.csv", low_memory=False)
-
-# Filter for 2010
-df_2010 = df[df['year'] == 2010].copy()
-
-# Convert to numeric
+# Ensure necessary columns are numeric
 df_2010['partc_score'] = pd.to_numeric(df_2010['partc_score'], errors='coerce')
 df_2010['avg_enrollment'] = pd.to_numeric(df_2010['avg_enrollment'], errors='coerce')
 
-# Function to run RDD at a given cutoff
-def run_rdd_model(data, cutoff, bandwidth):
-    data_rdd = data[
-        (data['partc_score'] >= cutoff - bandwidth) &
-        (data['partc_score'] <= cutoff + bandwidth)
+# Define cutoffs and bandwidth
+cutoffs = [3.0, 3.5]
+bandwidth = 0.125
+
+# Store results here
+results = []
+
+# Loop over cutoffs and run RDD
+for cutoff in cutoffs:
+    # Subset data within bandwidth
+    data_rdd = df_2010[
+        (df_2010['partc_score'] >= cutoff - bandwidth) &
+        (df_2010['partc_score'] <= cutoff + bandwidth)
     ][['partc_score', 'avg_enrollment']].dropna()
 
-    # Run RDD
-    print(f"\n=== RDD Summary at Cutoff {cutoff} ===")
+    # Rename columns for rdd package
+
+    # Fit RDD model
     model = rdd.rdd(data_rdd, 'partc_score', 'avg_enrollment', cut=cutoff)
-    print(model.fit().summary())
+    result = model.fit()
 
+    # Extract results
+    results.append({
+        'Cutoff': cutoff,
+        'RD_Estimate': result.params['partc_score'],
+        'Std_Error': result.bse['partc_score'],
+        'Num_Observations': result.nobs
+    })
 
-
-# Run models at 3.0 and 3.5 cutoffs
-run_rdd_model(df_2010, 3.0, 0.125)
-run_rdd_model(df_2010, 3.5, 0.125)
+# Display summary table
+summary_df = pd.DataFrame(results)
+print(summary_df)
