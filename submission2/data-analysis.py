@@ -31,18 +31,32 @@ rating_columns = [
 df_2010 = df_2010.dropna(subset=['partc_score', 'avg_enrollment'])
 df_2010['raw_rating'] = df_2010[rating_columns].mean(axis=1, skipna=True)
 
-# Round raw_rating to the nearest 0.5
-df_2010['rounded_rating'] = df_2010['raw_rating'].round(1)
+# Define valid ratings
+# Define function to round to nearest 0.5
+def round_half(x):
+    return np.round(x * 2) / 2
 
-# Filter only ratings from 3.0 to 5.0 (rounded to nearest 0.5)
+# Apply the rounding
+df_2010['rounded_rating'] = df_2010['raw_rating'].apply(round_half)
+
+# Define valid ratings
 valid_ratings = [3.0, 3.5, 4.0, 4.5, 5.0]
-rating_counts = df_2010[df_2010['rounded_rating'].isin(valid_ratings)]['rounded_rating'].value_counts().sort_index()
+
+# Count and reindex
+rating_counts = (
+    df_2010
+    .loc[df_2010['rounded_rating'].isin(valid_ratings), 'rounded_rating']
+    .value_counts()
+    .reindex(valid_ratings, fill_value=0)
+    .sort_index()
+)
+
 
 # Display as a table
 rating_table = rating_counts.reset_index()
 rating_table.columns = ['Star Rating', 'Number of Plans']
+plt.figure(figsize=(10, 6))
 
-# Show the result
 print(rating_table)
 
 
