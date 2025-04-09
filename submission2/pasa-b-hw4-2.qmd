@@ -28,6 +28,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import pearsonr
 import numpy as np
+from pyfixest.estimation import feols
+ 
 
 # Load the data
 df = pd.read_csv('/Users/baranpasa/Library/Mobile Documents/com~apple~CloudDocs/Desktop/Emory/Junior Year/Junior Spring/ECON 470/ECON 470 Python /homework4/data/output/final_ma_data.csv')
@@ -68,6 +70,7 @@ else:
 
 print(f"\nFinal filtered dataset shape:", filtered_df.shape)
 ```
+{{< pagebreak >}}
 
 
 
@@ -159,6 +162,8 @@ else:
     print("Error: 'county' or 'year' columns not found. Cannot create the required analysis.")
 
 ```
+{{< pagebreak >}}
+
 
 ```{python}
 # 1. Star rating distribution for 2010, 2012, and 2015
@@ -212,7 +217,10 @@ else:
 plt.tight_layout()
 plt.savefig('star_rating_distribution.png', dpi=300)
 plt.show()
+```
+{{< pagebreak >}}
 
+```{python}
 # Figure 2: Average benchmark payment over time
 plt.figure(figsize=(12, 8))
 if 'ma_rate' in df.columns:
@@ -253,6 +261,7 @@ plt.tight_layout()
 plt.savefig('benchmark_payment_trend.png', dpi=300)
 plt.show()
 ```
+{{< pagebreak >}}
 
 ```{python}
 # Figure 3: Medicare Advantage share over time and correlation with benchmarks
@@ -319,12 +328,101 @@ plt.tight_layout()
 plt.savefig('ma_share_trend.png', dpi=300)
 plt.show()
 ```
+{{< pagebreak >}}
 
 ## Regressions
 
+#### 5. 
 ```{python}
+rating_columns = [
+    'breastcancer_screen', 'rectalcancer_screen', 'cv_cholscreen', 'diabetes_cholscreen',
+    'glaucoma_test', 'monitoring', 'flu_vaccine', 'pn_vaccine', 'physical_health',
+    'mental_health', 'osteo_test', 'physical_monitor', 'primaryaccess',
+    'hospital_followup', 'depression_followup', 'nodelays', 'carequickly',
+    'overallrating_care', 'overallrating_plan', 'calltime',
+    'doctor_communicate', 'customer_service', 'osteo_manage',
+    'diabetes_eye', 'diabetes_kidney', 'diabetes_bloodsugar',
+    'diabetes_chol', 'antidepressant', 'bloodpressure', 'ra_manage',
+    'copd_test', 'betablocker', 'bladder', 'falling', 'appeals_timely',
+    'appeals_review'
+]
 
+# Create new column with the row-wise average
+df_2010 = filtered_df.copy()
+df_2010 = df_2010.dropna(subset=['partc_score', 'avg_enrollment'])
+df_2010['raw_rating'] = df_2010[rating_columns].mean(axis=1, skipna=True)
+
+# Round raw_rating to the nearest 0.5
+df_2010['rounded_rating'] = df_2010['raw_rating'].round(1)
+
+# Filter only ratings from 3.0 to 5.0 (rounded to nearest 0.5)
+valid_ratings = [3.0, 3.5, 4.0, 4.5, 5.0]
+rating_counts = df_2010[df_2010['rounded_rating'].isin(valid_ratings)]['rounded_rating'].value_counts().sort_index()
+
+# Display as a table
+rating_table = rating_counts.reset_index()
+rating_table.columns = ['Star Rating', 'Number of Plans']
+
+# Set up the plot
+plt.figure(figsize=(10, 6))
+
+# Create scatterplot using seaborn
+sns.scatterplot(x=df_2010.index, y=df_2010['raw_rating'], alpha=0.6)
+
+# Set y-axis limits from 0 to 5.1
+plt.ylim(0, 5.1)
+
+# Add labels and title
+plt.xlabel('Plan Index')
+plt.ylabel('Raw Rating')
+plt.title('Scatter Plot of Raw Ratings')
+plt.grid(True)
+plt.tight_layout()
+
+# Show the plot
+plt.show()
+
+# Show the result
+print(rating_table)
 ```
 
+#### 6. 
 ```{python}
+def run_rd(df, cutoff, bandwidth):
+    df = df.copy()
+    df['treat'] = (df['raw_rating'] >= cutoff).astype(int)
+    
+    # Keep only observations within the bandwidth window
+    df_band = df[(df['raw_rating'] >= cutoff - bandwidth) & (df['raw_rating'] <= cutoff + bandwidth)].copy()
+    
+    # Center the running variable
+    df_band['running'] = df_band['raw_rating'] - cutoff
+
+    # Run the RD regression
+    model = feols("avg_enrollment ~ treat + running", data=df_band)
+    
+    return model
+
+# Run RD at 3.0 and 3.5 cutoffs
+model_3 = run_rd(df_2010, cutoff=3.0, bandwidth=0.125)
+model_3_5 = run_rd(df_2010, cutoff=3.5, bandwidth=0.125)
+
+coef_3 = model_3.coef()
+se_3 = model_3.se()
+pval_3 = model_3.pvalue()
+
+coef_3_5 = model_3_5.coef()
+se_3_5 = model_3_5.se()
+pval_3_5 = model_3_5.pvalue()
+
+# Summarize in a table
+results = pd.DataFrame({
+    'Cutoff': ['3.0 Stars', '3.5 Stars'],
+    'Estimate (Treatment Effect)': [coef_3['treat'], coef_3_5['treat']],
+    'Std. Error': [se_3['treat'], se_3_5['treat']],
+    'p-Value': [pval_3['treat'], pval_3_5['treat']]
+})
+
+print(results)
+
 ```
