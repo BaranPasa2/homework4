@@ -1,8 +1,9 @@
 import pandas as pd
 import numpy as np
 import seaborn as sns
-from rdd import rdd
 import matplotlib.pyplot as plt
+from pyfixest.estimation import feols
+
 
 df_2010 = pd.read_csv('data/output/final_ma_data.csv')
 #set the dataset to only show year 2010
@@ -46,40 +47,40 @@ print(rating_table)
 
 
 # 6.
+def run_rd(df, cutoff, bandwidth):
+    df = df.copy()
+    df['treat'] = (df['raw_rating'] >= cutoff).astype(int)
+    
+    # Keep only observations within the bandwidth window
+    df_band = df[(df['raw_rating'] >= cutoff - bandwidth) & (df['raw_rating'] <= cutoff + bandwidth)].copy()
+    
+    # Center the running variable
+    df_band['running'] = df_band['raw_rating'] - cutoff
 
-# # Ensure necessary columns are numeric
-# df_2010['partc_score'] = pd.to_numeric(df_2010['partc_score'], errors='coerce')
-# df_2010['avg_enrollment'] = pd.to_numeric(df_2010['avg_enrollment'], errors='coerce')
+    # Run the RD regression
+    model = feols("avg_enrollment ~ treat + running", data=df_band)
+    
+    return model
 
-# # Define cutoffs and bandwidth
-# cutoffs = [3.0, 3.5]
-# bandwidth = 0.125
+# Run RD at 3.0 and 3.5 cutoffs
+model_3 = run_rd(df_2010, cutoff=3.0, bandwidth=0.125)
+model_3_5 = run_rd(df_2010, cutoff=3.5, bandwidth=0.125)
 
-# # Store results here
-# results = []
+# Extract results properly by calling the methods
+coef_3 = model_3.coef()
+se_3 = model_3.se()
+pval_3 = model_3.pvalue()
 
-# # Loop over cutoffs and run RDD
-# for cutoff in cutoffs:
-#     # Subset data within bandwidth
-#     data_rdd = df_2010[
-#         (df_2010['raw_rating'] >= cutoff - bandwidth) &
-#         (df_2010['raw_rating'] <= cutoff + bandwidth)
-#     ][['raw_rating', 'avg_enrollment']].dropna()
+coef_3_5 = model_3_5.coef()
+se_3_5 = model_3_5.se()
+pval_3_5 = model_3_5.pvalue()
 
-#     # Rename columns for rdd package
+# Summarize in a table
+results = pd.DataFrame({
+    'Cutoff': ['3.0 Stars', '3.5 Stars'],
+    'Estimate (Treatment Effect)': [coef_3['treat'], coef_3_5['treat']],
+    'Std. Error': [se_3['treat'], se_3_5['treat']],
+    'p-Value': [pval_3['treat'], pval_3_5['treat']]
+})
 
-#     # Fit RDD model
-#     model = rdd.rdd(data_rdd, 'partc_score', 'avg_enrollment', cut=cutoff)
-#     result = model.fit()
-
-#     # Extract results
-#     results.append({
-#         'Cutoff': cutoff,
-#         'RD_Estimate': result.params['raw_rating'],
-#         'Std_Error': result.bse['raw_rating'],
-#         'Num_Observations': result.nobs
-#     })
-
-# # Display summary table
-# summary_df = pd.DataFrame(results)
-# print(summary_df)
+print(results)
