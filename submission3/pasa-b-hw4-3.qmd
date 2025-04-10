@@ -1,0 +1,31 @@
+---
+title: "Homework 4 - Submission 3"
+subtitle: "ECON 470"
+author: "Baran Pasa"
+execute:
+  echo: false
+format:
+  pdf:
+    output-file: "pasa-b-hwk4-3"
+    output-exit: "pdf"
+    code-fold: true
+    highlight-style: github
+    include-in-header:
+      text: |
+        \addtokomafont{disposition}{\rmfamily}
+
+jupyter: python3
+
+---
+
+# Homework 4 
+### [Link to Github]('https://github.com/BaranPasa2/homework4') 
+
+####
+
+```{python}
+#| echo: false
+#| warning: false
+#| message: false
+#| 
+```
