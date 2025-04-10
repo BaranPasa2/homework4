@@ -21,11 +21,131 @@ jupyter: python3
 # Homework 4 
 ### [Link to Github]('https://github.com/BaranPasa2/homework4') 
 
-####
+## Summarizing the Data
+#### 1.
+
+All SNPs, 800-series plans, and perscription drug only plans where removed from the dataset so that only plans that offer Part C benefits were included. Then, a box-and-whisper plot showing the distribution of plan counts by county over time was created. An accompanying table was also created to better digest the data.
 
 ```{python}
-#| echo: false
-#| warning: false
-#| message: false
-#| 
+#| echo: false         
+#| output: false      
+#| warning: false     
+#| message: false     
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy.stats import pearsonr
+import numpy as np
+import warnings
+warnings.filterwarnings('ignore')
+
+# Load the data
+df = pd.read_csv('/Users/baranpasa/Library/Mobile Documents/com~apple~CloudDocs/Desktop/Emory/Junior Year/Junior Spring/ECON 470/ECON 470 Python /homework4/data/output/final_ma_data.csv', low_memory=False)
+
+filtered_df = df.copy()
+
+columns_present = []
+for col in ['snp', 'planid', 'plan_type', 'partd']:
+    columns_present.append(col in df.columns)
+
+if 'snp' in df.columns:
+    # Check the data type to decide how to filter
+    if pd.api.types.is_numeric_dtype(df['snp']):
+        filtered_df = filtered_df[filtered_df['snp'] == 0]
+    else:
+        # If it's not numeric, try to filter based on string values
+        filtered_df = filtered_df[~filtered_df['snp'].astype(str).str.contains('1|Yes|Y|True', case=False, na=False)]
+if 'planid' in df.columns:
+    # Check if planid is numeric
+    if pd.api.types.is_numeric_dtype(df['planid']):
+        filtered_df = filtered_df[~((filtered_df['planid'] >= 800) & (filtered_df['planid'] <= 899))]
+    else:
+        # If it's not numeric, convert to string and check
+        filtered_df = filtered_df[~filtered_df['planid'].astype(str).str.match(r'8\d{2}')]
+
+# Step 4: Filter out prescription drug only plans
+# This is more complex as we need to check multiple conditions
+if all(col in df.columns for col in ['plan_type', 'partd']):
+    # Assuming that Part D only plans are marked in plan_type or partd
+    pdo_mask = (filtered_df['plan_type'].astype(str).str.contains('Prescription Drug|PDP', case=False, na=False))
+    if pd.api.types.is_numeric_dtype(df['partd']):
+        pdo_mask = pdo_mask | (filtered_df['partd'] == 1 & ~filtered_df['plan_type'].astype(str).str.contains('MA', case=False, na=False))
+    
+    filtered_df = filtered_df[~pdo_mask]
+else:
+    # Alternative approach: keep only MA, HMO, PPO, etc. plans
+    if 'plan_type' in df.columns:
+        ma_mask = filtered_df['plan_type'].astype(str).str.contains('MA|HMO|PPO|Private Fee|Cost Plan|Medical', case=False, na=False)
+        filtered_df = filtered_df[ma_mask]
+
+# Group by county and year to count plans
+if all(col in filtered_df.columns for col in ['county', 'year']):
+    county_year_plan_counts = filtered_df.groupby(['county', 'year']).size().reset_index(name='plan_count')
+    county_year_plan_counts['plan_count'] = county_year_plan_counts['plan_count']
+    # Set the style for a cleaner look
+    sns.set_style("whitegrid")
+    plt.figure(figsize=(12, 8))
+    
+    # Create a more polished box plot
+    ax = sns.boxplot(
+        x='year', 
+        y='plan_count', 
+        data=county_year_plan_counts,
+        palette="Blues",
+        width=0.6,
+        fliersize=3,
+        linewidth=1.5
+    )
+    
+    # Add a more descriptive title and labels with better formatting
+    plt.title('Distribution of Medicare Advantage Plans by County (2010-2015)', 
+              fontsize=16, fontweight='bold', pad=20)
+    plt.xlabel('Year', fontsize=14, labelpad=10)
+    plt.ylabel('Number of Plans Per County', fontsize=14, labelpad=10)
+    
+    # Improve the tick formatting
+    plt.xticks(rotation=0, fontsize=12)
+    plt.yticks(fontsize=12)
+    
+    # Add a light grid only on the y-axis for better readability
+    ax.grid(axis='y', linestyle='--', alpha=0.7)
+    
+    # Add a more concise summary of statistics as a table below
+    years = sorted(county_year_plan_counts['year'].unique())
+    stats_data = []
+    
+    for year in years:
+        year_data = county_year_plan_counts[county_year_plan_counts['year'] == year]['plan_count']
+        stats_data.append([
+            year,
+            f"{year_data.median():.0f}",
+            f"{year_data.mean():.1f}",
+            f"{year_data.min():.0f}",
+            f"{year_data.max():.0f}"
+        ])
+    
+    # Create a nicely formatted table for the statistics
+    table = plt.table(
+        cellText=stats_data,
+        colLabels=['Year', 'Median', 'Mean', 'Min', 'Max'],
+        loc='bottom',
+        bbox=[0.15, -0.38, 0.7, 0.2],  # [left, bottom, width, height]
+        cellLoc='center'
+    )
+    table.auto_set_font_size(False)
+    table.set_fontsize(10)
+    table.scale(1, 1.5)  # Adjust table size for better readability
+    
+    # Adjust layout to make room for the table
+    plt.subplots_adjust(bottom=0.25)
+    
+    # Save the figure with higher quality
+ #   plt.savefig('ma_plan_distribution_by_county.png', dpi=300, bbox_inches='tight')
+    plt.show()
 ```
+
+Looking at the table and graph table above, We can see that after 2010 the number of plans with Part C benefits offered in each country dropped significantly. The county with the highest number of Part C plans dropped from 906 in 2010 to 513 in 2011, and the median and mean dropped from 29 and 48.7 to 18 and 30.2 respectively. This tred continued after 2011, with the number of plans remaining significantly lower than in 2010. 
+
+The number of Medicare Advantage plans per county appears generally sufficient. Median plan availability dropped from 29 to 15, while some counties still had hundreds of plans, suggesting a highly skewed distribution. While it seems sufficient, the wide variation points to potential inequality between rural and urban counties.
+
