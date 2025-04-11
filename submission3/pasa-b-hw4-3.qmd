@@ -201,9 +201,8 @@ plt.tight_layout()
 plt.show()
 ```
 
-As seen above, there are is no star data for the 2012. This highlights difficulties of working with different datasets, the data is not always complete.
 
-Comparing 2010 to 2015, we can see that star rating overall improved. There was an incredibly high number of plans rated 2.5 in 2010, a number which then fell drastically in 2015. In 2015, most plans had a rating of 4.0. It is also worth noting that there were no plans with ratings of 2.0 in 2015, and no plans with ratings of 5.0 in 2010. 
+Assessing the graph above, we can see a steady improvement in average star rating from 2010 to 2015. In 2010 the most common rating for a plan was 2.5. It then increased to 3.0 in 2012, and in 2015 the most popular star-rating was 4.0 by  significant amount. 2015 also saw no plans being rated as low as 2.0, and some plans were rated as high as 5.0. 
 {{< pagebreak >}}
 
 #### 3. 
@@ -285,7 +284,9 @@ plt.grid(True)
 plt.show()
 ```
 
-The graph shows a steady increase in the average Medicare Advantage (MA) share from 2010 to 2015, rising from about 1.2% to nearly 1.9%. This trend suggests growing enrollment in MA plans over time. However, the low correlation with benchmark rates (0.04) implies that this growth was likely driven by factors other than payment incentives, such as plan quality or beneficiary preferences. A brief plateau around 2013 may reflect temporary market or policy adjustments.
+The graph shows a steady increase in the average Medicare Advantage (MA) share from 2010 to 2015, rising from roughly 11% to over 30%. 
+
+This growth shows the increase of private insurance participation in Medicare which should also result in decreasing government expenditure. However, when we look at average benchmark payments, we see that there has not been any significant decrease in prices. Further research into the payment structure of Medicare Advantage, as well as the data being used, is necessary in order to draw any conclusions.
 {{< pagebreak >}}
 
 ## Estimating Average Treatment Effects (ATEs)
@@ -354,7 +355,8 @@ rating_table  # This will render as a markdown table in Quarto
 
 ```
 
-The table above shows the a breakdown of plans rounded up to the nearest half-star rating. Compared to 4.0 rated plans and below, there is a miniscule number, only 50 plans, that could be rounded to 4.5 stars. 
+Even when rounding plans up the nearest half-star rating, we can see that a majority of plans are below 3.0. There are very few plans above 4.0, and none above 4.5. This falls in line with the graphs shown earlier in popints 1-4.
+
 
 #### 6.
 
@@ -438,7 +440,9 @@ final_table.style.set_caption("RD Estimates at 3-Star and 3.5-Star Thresholds")
 
 ```
 
-At the 3-star threshold, being rounded to 3 stars (versus staying at 2.5) increases market share by approximately 2.4 percentage points (SE = 0.004). At the 3.5-star threshold, the impact is slightly larger at 3.3 percentage points (SE = 0.010). The running score variable is also positively associated with market share at both thresholds, suggesting a continuous relationship between raw rating and market performance.
+At the 3-star threshold, rounding increases market share by 2.4 percentage points, while at the 3.5-star threshold, the effect is slightly larger at 3.3 percentage points. The running score is also positively associated with market share at both thresholds, suggesting that even small differences in raw rating influence enrollment.
+
+It is worth noting, however, that the R^2^ for both thresholds is very small.
 {{< pagebreak >}}
 
 #### 7. 
@@ -517,7 +521,7 @@ plt.errorbar(df_3['Bandwidth'], df_3['Estimate'], yerr=1.96 * df_3['Std. Error']
 
 # Plot 3.5-star results
 plt.errorbar(df_35['Bandwidth'], df_35['Estimate'], yerr=1.96 * df_35['Std. Error'],
-             fmt='o', label='3.5-star', color='green', capsize=3)
+             fmt='x', label='3.5-star', color='green', capsize=3)
 
 # Add plot elements
 plt.axhline(0, color='gray', linestyle='--', linewidth=1)
@@ -583,33 +587,37 @@ These two histograms show the distribution of raw star ratings around the 3.0 an
 {{< pagebreak >}}
 
 #### 9.
+
 ```{python}
 #| echo: false         
-#| output: True      
+#| output: true      
 #| warning: false     
 #| message: false
-
 # Step 1: Add binary indicators
 df_2010['is_hmo'] = df_2010['plan_type'].str.contains('HMO', case=False, na=False).astype(int)
 df_2010['has_partd'] = (df_2010['partd'] == 'Yes').astype(int)
 
-df_2010_HMO = df_2010[df_2010["plan_type"] == "HMO/HMOPOS"]
-
-
-# Step 2: Function to check balance
-def covariate_balance(df, cutoff, bandwidth=0.125):
+# Step 2: Revised function to check covariate balance using STAR RATING (not raw_rating)
+def covariate_balance_by_star(df, cutoff, bandwidth=0.125):
     df = df.copy()
-    df_window = df[(df['raw_rating'] >= cutoff - bandwidth) & (df['raw_rating'] <= cutoff + bandwidth)].copy()
-    df_window['above_cutoff'] = (df_window['raw_rating'] >= cutoff).astype(int)
+    running = df['raw_rating'] - (cutoff - 0.25)
     
-    balance = df_window.groupby('above_cutoff')[['is_hmo', 'has_partd']].mean().T
+    # Keep within bandwidth and plans with exact Star_Rating values
+    df_band = df[
+        (running.between(-bandwidth, bandwidth)) &
+        (df['Star_Rating'].isin([cutoff - 0.5, cutoff]))
+    ].copy()
+    
+    df_band['above_cutoff'] = (df_band['Star_Rating'] == cutoff).astype(int)
+    
+    balance = df_band.groupby('above_cutoff')[['is_hmo', 'has_partd']].mean().T
     balance.columns = ['Below Cutoff', 'Above Cutoff']
     balance['Difference'] = balance['Above Cutoff'] - balance['Below Cutoff']
     return balance
 
-# Step 3: Get balance tables
-balance_3 = covariate_balance(df_2010, cutoff=3.0)
-balance_35 = covariate_balance(df_2010, cutoff=3.5)
+# Step 3: Get covariate balance for 3.0 and 3.5 thresholds
+balance_3 = covariate_balance_by_star(df_2010, cutoff=3.0)
+balance_35 = covariate_balance_by_star(df_2010, cutoff=3.5)
 
 # Step 4: Combine and label
 balance_3['Cutoff'] = '3.0'
@@ -618,18 +626,54 @@ balance_combined = pd.concat([balance_3, balance_35])
 balance_combined.reset_index(inplace=True)
 balance_combined.rename(columns={'index': 'Characteristic'}, inplace=True)
 
-# Round and return for Quarto to display as markdown table
+# Step 5: Round and return
 balance_combined.round(3)
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Round for clarity and copy for plotting
+plot_df = balance_combined.round(3).copy()
+
+# Filter for each characteristic
+hmo_df = plot_df[plot_df['Characteristic'] == 'is_hmo'].copy()
+partd_df = plot_df[plot_df['Characteristic'] == 'has_partd'].copy()
+
+# Melt both for plotting
+hmo_melt = hmo_df.melt(id_vars=['Cutoff'], value_vars=['Below Cutoff', 'Above Cutoff'],
+                       var_name='Group', value_name='Proportion')
+partd_melt = partd_df.melt(id_vars=['Cutoff'], value_vars=['Below Cutoff', 'Above Cutoff'],
+                           var_name='Group', value_name='Proportion')
+
+# HMO Plot
+plt.figure(figsize=(8, 5))
+sns.barplot(data=hmo_melt, x='Cutoff', y='Proportion', hue='Group', palette='Blues', ci=None)
+plt.title('HMO Plan Proportions Above vs. Below Star Cutoffs')
+plt.ylim(0, 1)
+plt.ylabel('Proportion of Plans that are HMO')
+plt.xlabel('Star Rating Cutoff')
+plt.grid(True, linestyle='--', alpha=0.3)
+plt.legend(title='Group')
+plt.tight_layout()
+plt.show()
+
+# Part D Plot
+plt.figure(figsize=(8, 5))
+sns.barplot(data=partd_melt, x='Cutoff', y='Proportion', hue='Group', palette='Greens', ci=None)
+plt.title('Part D Coverage Proportions Above vs. Below Star Cutoffs')
+plt.ylim(0, 1)
+plt.ylabel('Proportion of Plans with Part D')
+plt.xlabel('Star Rating Cutoff')
+plt.grid(True, linestyle='--', alpha=0.3)
+plt.legend(title='Group')
+plt.tight_layout()
+plt.show()
+
 ```
 
+For HMO status, there is a significant jump at the 3.5 threshold: the proportion of HMO plans rises from just over 20% below the cutoff to over 50% above it, indicating a shift in plan type composition. The same can also be said around the 3.0 rating. According to the data, there are no HMO plans below the 3.0 rating. This could be either due to errors in the dataset, or that all plans with an HMO are automatically rated 3.0 stars and above. 
 
+For Part D coverage, the difference is most significant at the 3.0 threshold. Plans just above the 3.0 cutoff are far more likely to offer drug coverage than those just below (around 87% vs. 52%). At the 3.5 threshold, Part D coverage remains high on both sides with minimal difference, suggesting little change in this characteristic across the higher threshold.
 
-##### 10.
+#### 10. Analysis of Points 5 - 9
 
-Based on the regression discontinuity results, there is no strong or consistent evidence that crossing the 3.0- or 3.5-star rating thresholds leads to a significant increase in plan enrollments. At the 3.0-star cutoff, the estimated treatment effect is –375.8, while at the 3.5-star cutoff it is 66.3. However, both estimates are statistically insignificant, with p-values of 0.23 and 0.65, respectively. The treatment effects are also not robust across different bandwidths, and the results vary considerably depending on the window used.
-
-The histogram of raw ratings shows noticeable bunching just below the 3.0-star threshold, which suggests potential manipulation or rating inflation. This challenges the RD assumption of continuity around the cutoff and may bias the estimates. In contrast, the distribution around the 3.5-star threshold appears smoother, which is more supportive of a valid RD design.
-
-Covariate balance tests further reveal meaningful imbalances near both thresholds. For example, plans above the 3.5-star cutoff are 29 percentage points more likely to be HMOs, and Part D coverage is lower above both thresholds. These differences indicate that plans just above and below the cutoff are not comparable in key dimensions, again challenging the RD design.
-
-In conclusion, the results suggest that increasing a plan’s star rating from just below to just above a policy threshold does not lead to a statistically significant or robust increase in enrollments. Furthermore, violations of RD assumptions, particularly around the 3.0-star cutoff, limit the strength of causal claims.
+Increasing a star rating has a positive and significant effect on Medicare Advantage plan enrollments. At the 3.0-star threshold, rounding up increases market share by 2.4 percentage points, and at 3.5 stars, the effect rises slightly to 3.3 points. The estimated treatment effects at 3.0 are stable and statistically precise across bandwidths, while those at 3.5 are more variable and less precise, suggesting the 3.0 threshold offers more robust evidence. However, bunching in raw ratings just below the 3.0 threshold raises concerns about potential manipulation, whereas the 3.5 threshold shows a smoother, more credible distribution. Overall, higher ratings attract more enrollees, but the reliability of RD estimates depends on the threshold examined.
