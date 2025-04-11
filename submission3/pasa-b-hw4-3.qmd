@@ -31,7 +31,6 @@ All SNPs, 800-series plans, and perscription drug only plans where removed from 
 #| output: false      
 #| warning: false     
 #| message: false     
-
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -148,4 +147,62 @@ if all(col in filtered_df.columns for col in ['county', 'year']):
 Looking at the table and graph table above, We can see that after 2010 the number of plans with Part C benefits offered in each country dropped significantly. The county with the highest number of Part C plans dropped from 906 in 2010 to 513 in 2011, and the median and mean dropped from 29 and 48.7 to 18 and 30.2 respectively. This tred continued after 2011, with the number of plans remaining significantly lower than in 2010. 
 
 The number of Medicare Advantage plans per county appears generally sufficient. Median plan availability dropped from 29 to 15, while some counties still had hundreds of plans, suggesting a highly skewed distribution. While it seems sufficient, the wide variation points to potential inequality between rural and urban counties.
+{{< pagebreak >}}
 
+#### 2. 
+```{python}
+#| echo: false         
+#| output: false      
+#| warning: false     
+#| message: false
+years_to_analyze = [2010, 2012, 2015]
+star_rating_data = []
+
+for year in years_to_analyze:
+    year_data = df[df['year'] == year]
+    if 'Star_Rating' in year_data.columns:
+        # Convert to numeric and drop NAs
+        valid_ratings = pd.to_numeric(year_data['Star_Rating'], errors='coerce').dropna()
+
+        if not valid_ratings.empty:
+            rating_counts = valid_ratings.value_counts().sort_index()
+            for rating, count in rating_counts.items():
+                star_rating_data.append({
+                    'Year': year,
+                    'Rating': rating,
+                    'Count': count
+                })
+        else:
+            for rating in [2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]:
+                star_rating_data.append({
+                    'Year': year,
+                    'Rating': rating,
+                    'Count': 0
+                })
+
+# Create DataFrame
+star_df = pd.DataFrame(star_rating_data)
+
+# Make sure 'Rating' is ordered for plotting
+star_df['Rating'] = star_df['Rating'].astype(str)
+star_df['Rating'] = pd.Categorical(star_df['Rating'],
+                                   categories=[str(r) for r in sorted(star_df['Rating'].astype(float).unique())],
+                                   ordered=True)
+
+# Plot
+plt.figure(figsize=(12, 8))
+sns.barplot(x='Rating', y='Count', hue='Year', data=star_df)
+
+plt.title('Distribution of Star Ratings by Year (2010, 2012, 2015)', fontsize=16)
+plt.xlabel('Star Rating', fontsize=14)
+plt.ylabel('Number of Plans', fontsize=14)
+plt.grid(axis='y', linestyle='--', alpha=0.7)
+plt.tight_layout()
+plt.show()
+```
+
+As seen above, there are is no star data for the 2012. This highlights difficulties of working with different datasets, the data is not always complete.
+
+Comparing 2010 to 2015, we can see that star rating overall improved. There was an incredibly high number of plans rated 2.5 in 2010, a number which then fell drastically in 2015. In 2015, most plans had a rating of 4.0. It is also worth noting that there were no plans with ratings of 2.0 in 2015, and no plans with ratings of 5.0 in 2010. 
+
+#### 3. 
