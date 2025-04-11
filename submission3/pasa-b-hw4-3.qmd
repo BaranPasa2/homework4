@@ -389,6 +389,10 @@ The table above shows the a breakdown of plans rounded up to the nearest half-st
 
 #### 6.
 ```{python}
+#| echo: false         
+#| output: false      
+#| warning: false     
+#| message: false
 def run_rd(df, cutoff, bandwidth):
     df = df.copy()
     df['treat'] = (df['raw_rating'] >= cutoff).astype(int)
@@ -434,6 +438,10 @@ Neither the 3.0-star nor the 3.5-star cutoff shows a statistically significant e
 
 #### 7. 
 ```{python}
+#| echo: false         
+#| output: false      
+#| warning: false     
+#| message: false
 # Run RD at 3.0 and 3.5 cutoffs with different bandwidths
 model_3_01 = run_rd(df_2010, cutoff=3.0, bandwidth=0.1)
 model_3_012 = run_rd(df_2010, cutoff=3.0, bandwidth=0.12)
@@ -499,6 +507,10 @@ pivot_df
 
 #### 8.
 ```{python}
+#| echo: false         
+#| output: false      
+#| warning: false     
+#| message: false
 plt.figure(figsize=(12, 5))
 
 # First plot: distribution around 3.0
@@ -524,9 +536,10 @@ plt.legend()
 plt.tight_layout()
 plt.show()
 ```
-These two histograms show the **distribution of raw star ratings** around the **3.0** and **3.5** cutoff points, which are used as the running variables in your regression discontinuity (RD) analysis.
+These two histograms show the distribution of raw star ratings around the 3.0 and 3.5 cutoff points.
 
----
+* At the 3.0 threshold, the distribution of the running variable shows potential signs of manipulation or rating bunching, which may challenge the validity of RD estimates there.
+* In contrast, the 3.5 threshold appears more stable, suggesting it may be a more reliable setting for RD analysis.
 
 ##### Left Plot: 3.0 Cutoff
 * There is a clear jump in density just below 3.0, especially around 2.7–2.9, with much higher counts of plans compared to the bins just above 3.0.
@@ -538,6 +551,42 @@ These two histograms show the **distribution of raw star ratings** around the **
 * There's no obvious discontinuity or bunching just above or below 3.5 —> the frequency of plans seems fairly even across the window.
 * This supports the RD assumption of continuity at 3.5, making it a more credible cutoff for causal inference.
 
-##### Conclusion:
-* At the 3.0 threshold, the distribution of the running variable shows potential signs of manipulation or rating bunching, which may challenge the validity of RD estimates there.
-* In contrast, the 3.5 threshold appears more stable, suggesting it may be a more reliable setting for RD analysis.
+#### 9.
+```{python}
+#| echo: false         
+#| output: false      
+#| warning: false     
+#| message: false
+# Step 1: Add binary indicators
+df_2010['is_hmo'] = df_2010['plan_type'].str.contains('HMO', case=False, na=False).astype(int)
+df_2010['has_partd'] = (df_2010['partd'] == 'Yes').astype(int)
+
+# Step 2: Function to check balance
+def covariate_balance(df, cutoff, bandwidth=0.125):
+    df = df.copy()
+    df_window = df[(df['raw_rating'] >= cutoff - bandwidth) & (df['raw_rating'] <= cutoff + bandwidth)].copy()
+    df_window['above_cutoff'] = (df_window['raw_rating'] >= cutoff).astype(int)
+    
+    balance = df_window.groupby('above_cutoff')[['is_hmo', 'has_partd']].mean().T
+    balance.columns = ['Below Cutoff', 'Above Cutoff']
+    balance['Difference'] = balance['Above Cutoff'] - balance['Below Cutoff']
+    balance['Cutoff'] = cutoff
+    return balance.reset_index().rename(columns={'index': 'Characteristic'})
+
+# Step 3: Combine balance tables
+balance_all = pd.concat([
+    covariate_balance(df_2010, 3.0),
+    covariate_balance(df_2010, 3.5)
+])
+
+# Step 4: Create pivot table
+pivot_table = balance_all.pivot(index='Characteristic', columns='Cutoff')
+
+# Optional: Clean up multi-index column names
+pivot_table.columns = [f'{col[0]} ({col[1]})' for col in pivot_table.columns]
+pivot_table = pivot_table.reset_index()
+
+# Round values for cleaner display
+pivot_table.round(3)
+```
+
