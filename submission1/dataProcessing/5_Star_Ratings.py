@@ -1,6 +1,3 @@
-##############################################################################
-## Read in MA star rating data
-##############################################################################
 
 import pandas as pd
 
@@ -178,7 +175,7 @@ star_data_2011["year"] = 2011
 
 
 # 2012 STAR RATING DATA
-ma_path_2012a = "data/input/ratingsData/2012_Plan_Ratings_and_Display_Measures/2012 Plan Ratings Spring Release (04_2012)/2012_Part_C_Report_Card_Master_Table_2012_04_02_Star.csv"
+ma_path_2012a = "/Users/baranpasa/Library/Mobile Documents/com~apple~CloudDocs/Desktop/Emory/Junior Year/Junior Spring/ECON 470/ECON 470 Python /homework4/data/input/ratingsData/2012_Plan_Ratings_and_Display_Measures/2012 Plan Ratings Fall Release (10_2011)/2012_Part_C_Report_Card_Master_Table_2011_11_01_Star.csv"
 star_data_2012a = pd.read_csv(ma_path_2012a, skiprows=5, names=rating_vars["2012"], encoding='latin1')
 
 # Convert columns to numeric except IDs and org metadata
@@ -187,7 +184,7 @@ cols_to_numeric_2012 = star_data_2012a.columns.difference(id_vars_2012)
 star_data_2012a[cols_to_numeric_2012] = star_data_2012a[cols_to_numeric_2012].apply(pd.to_numeric, errors="coerce")
 
 # Read summary data
-ma_path_2012b = "data/input/ratingsData/2012_Plan_Ratings_and_Display_Measures/2012 Plan Ratings Spring Release (04_2012)/2012_Part_C_Report_Card_Master_Table_2012_04_02_Summary.csv"
+ma_path_2012b = "data/input/ratingsData/2012_Plan_Ratings_and_Display_Measures/2012 Plan Ratings Fall Release (10_2011)/2012_Part_C_Report_Card_Master_Table_2011_11_01_Summary.csv"
 summary_cols_2012 = [
     "contractid", "org_type", "org_parent", "org_marketing",
     "partc_score", "partc_lowscore", "partc_highscore",
@@ -220,6 +217,7 @@ star_data_2012b = star_data_2012b[["contractid", "new_contract", "low_score", "p
 # Merge and finalize
 star_data_2012 = pd.merge(star_data_2012a, star_data_2012b, on="contractid", how="left")
 star_data_2012["year"] = 2012
+
 
 
 

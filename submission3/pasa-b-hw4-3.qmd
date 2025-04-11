@@ -271,55 +271,17 @@ In order to assess the overall trend of average benchmark payments, broader year
 #| output: true      
 #| warning: false     
 #| message: false   
-plt.figure(figsize=(12, 8))
-if all(col in df.columns for col in ['avg_enrollment', 'avg_eligibles']):
-    # Ensure data is numeric
-    df['avg_enrollment'] = pd.to_numeric(df['avg_enrollment'], errors='coerce')
-    df['avg_eligibles'] = pd.to_numeric(df['avg_eligibles'], errors='coerce')
-    
-    # Calculate MA share and handle division by zero
-    df['ma_share'] = df['avg_enrollment'] / df['avg_eligibles'].replace(0, np.nan)
-    
-    # Filter out infinite values and NaNs
-    df['ma_share'] = df['ma_share'].replace([np.inf, -np.inf], np.nan)
-    
-    # Group by year and calculate average MA share (ignoring NaN values)
-    ma_share_by_year = df.groupby('year')['ma_share'].mean().reset_index()
-    
-    # Plot MA share trends
-    plt.plot(ma_share_by_year['year'], ma_share_by_year['ma_share'] * 100, 
-            marker='o', linestyle='-', linewidth=2, color='green')
-    plt.title('Average Medicare Advantage Share (2010-2015)', fontsize=16)
-    plt.xlabel('Year', fontsize=14)
-    plt.ylabel('Average MA Share (%)', fontsize=14)
-    plt.grid(True, linestyle='--', alpha=0.7)
-    
-    # Calculate correlation between MA share and benchmark payment if both columns have valid data
-    if 'ma_rate' in df.columns:
-        # Merge the two datasets
-        combined_data = pd.merge(ma_share_by_year, benchmark_by_year, on='year')
-        
-        # Drop any rows with NaN values to ensure valid correlation calculation
-        combined_data = combined_data.dropna(subset=['ma_share', 'ma_rate'])
-        
-        # Calculate correlation only if there are enough data points
-        if len(combined_data) >= 2:
-            correlation, p_value = pearsonr(combined_data['ma_share'], combined_data['ma_rate'])
-            
-            # Add text showing correlation coefficient
-            plt.text(2012, ma_share_by_year['ma_share'].max() * 100 * 0.9, 
-                    f'Correlation with benchmark: {correlation:.2f}',
-                    bbox=dict(facecolor='white', alpha=0.8))
-            
-            # Calculate the percentage change from 2010 to 2015 if both values exist
-            if 2010 in ma_share_by_year['year'].values and 2015 in ma_share_by_year['year'].values:
-                start_share = ma_share_by_year[ma_share_by_year['year'] == 2010]['ma_share'].values[0] * 100
-                end_share = ma_share_by_year[ma_share_by_year['year'] == 2015]['ma_share'].values[0] * 100
-                share_change = end_share - start_share
-                
+ma_share=df.copy()
 
-plt.tight_layout()
-plt.savefig('ma_share_trend.png', dpi=300)
+ma_share['ma_share'] = ma_share['avg_enrolled'] / ma_share['avg_eligibles']
+ma_share = ma_share.groupby('year')['ma_share'].mean().reset_index()
+
+plt.figure(figsize=(10, 6))
+plt.plot(ma_share['year'], ma_share['ma_share'], marker='o')
+plt.title('Average Share of Medicare Advantage Over Time (2010-2015)')
+plt.xlabel('Year')
+plt.ylabel('Average Share of Medicare Advantage')
+plt.grid(True)
 plt.show()
 ```
 
@@ -335,7 +297,6 @@ The graph shows a steady increase in the average Medicare Advantage (MA) share f
 #| message: false
 #| results: asis
    
-from pyfixest.estimation import feols
 
 df_2010 = pd.read_csv('/Users/baranpasa/Library/Mobile Documents/com~apple~CloudDocs/Desktop/Emory/Junior Year/Junior Spring/ECON 470/ECON 470 Python /homework4/data/output/final_ma_data.csv')
 
@@ -358,6 +319,14 @@ rating_columns = [
 df_2010 = df_2010.dropna(subset=['partc_score', 'avg_enrollment'])
 df_2010['raw_rating'] = df_2010[rating_columns].mean(axis=1, skipna=True)
 
+#refine df_2010
+core_col = [
+    "contractid", "planid", "fips", "avg_enrollment", "state", "county", "partc_score", "avg_eligibles", "avg_enrolled",  "risk_ab", "Star_Rating",  "ma_rate", "plan_type", "partd", "raw_rating"
+]
+df_2010 = df_2010[core_col]
+
+df_2010['market_share'] = df_2010['avg_enrolled'] / df_2010['avg_eligibles']
+df_2010
 # Define valid ratings
 # Define function to round to nearest 0.5
 def round_half(x):
@@ -388,23 +357,30 @@ rating_table  # This will render as a markdown table in Quarto
 The table above shows the a breakdown of plans rounded up to the nearest half-star rating. Compared to 4.0 rated plans and below, there is a miniscule number, only 50 plans, that could be rounded to 4.5 stars. 
 
 #### 6.
+
 ```{python}
 #| echo: false         
 #| output: true      
 #| warning: false     
 #| message: false
+
+from pyfixest.estimation import feols
+
 def run_rd(df, cutoff, bandwidth):
     df = df.copy()
-    df['treat'] = (df['raw_rating'] >= cutoff).astype(int)
     
-    # Keep only observations within the bandwidth window
-    df_band = df[(df['raw_rating'] >= cutoff - bandwidth) & (df['raw_rating'] <= cutoff + bandwidth)].copy()
+    # Define running variable
+    df['running'] = df['raw_rating'] - (cutoff - 0.25)
     
-    # Center the running variable
-    df_band['running'] = df_band['raw_rating'] - cutoff
-
-    # Run the RD regression
-    model = feols("avg_enrollment ~ treat + running", data=df_band)
+    # Define treatment as exactly equal to cutoff star rating
+    df['treat'] = (df['Star_Rating'] == cutoff).astype(int)
+    
+    # Filter only within bandwidth and to treated/control groups
+    control_rating = cutoff - 0.5
+    df_band = df[df['running'].between(-bandwidth, bandwidth) & df['Star_Rating'].isin([control_rating, cutoff])].copy()
+    
+    # Run RD regression
+    model = feols("market_share ~ running + treat", data=df_band)
     
     return model
 
@@ -412,28 +388,57 @@ def run_rd(df, cutoff, bandwidth):
 model_3 = run_rd(df_2010, cutoff=3.0, bandwidth=0.125)
 model_3_5 = run_rd(df_2010, cutoff=3.5, bandwidth=0.125)
 
-# Extract results properly by calling the methods
-coef_3 = model_3.coef()
-se_3 = model_3.se()
-pval_3 = model_3.pvalue()
+# Extract relevant model info from pyfixest, now including Intercept
+def extract_model_info(model, coef_labels):
+    coef = model.coef()
+    se = model.se()
+    n = model._N
+    r2 = model._r2
 
-coef_3_5 = model_3_5.coef()
-se_3_5 = model_3_5.se()
-pval_3_5 = model_3_5.pvalue()
+    # Format coef (se)
+    formatted = {
+        "Intercept": f"{coef.get('Intercept', float('nan')):.3f} ({se.get('Intercept', float('nan')):.3f})"
+    }
+    formatted.update({
+        label: f"{coef.get(var, float('nan')):.3f} ({se.get(var, float('nan')):.3f})"
+        for var, label in coef_labels.items()
+    })
+    formatted["N"] = n
+    formatted["R2"] = round(r2, 3)
+    return formatted
 
-# Summarize in a table
-results = pd.DataFrame({
-    'Cutoff': ['3.0 Stars', '3.5 Stars'],
-    'Estimate (Treatment Effect)': [coef_3['treat'], coef_3_5['treat']],
-    'Std. Error': [se_3['treat'], se_3_5['treat']],
-    'p-Value': [pval_3['treat'], pval_3_5['treat']]
+# Define label mappings matching new variable names
+coef_labels = {
+    "treat": "Rounded",
+    "running": "Running Score"
+}
+
+# Extract model data
+row_3 = extract_model_info(model_3, coef_labels)
+row_35 = extract_model_info(model_3_5, coef_labels)
+
+# Build final DataFrame including intercept
+final_table = pd.DataFrame({
+    "": ["Intercept", "Rounded", "Running Score", "N", "R2"],
+    "3-Star Threshold": [
+        row_3["Intercept"], row_3["Rounded"], row_3["Running Score"],
+        row_3["N"], row_3["R2"]
+    ],
+    "3.5-Star Threshold": [
+        row_35["Intercept"], row_35["Rounded"], row_35["Running Score"],
+        row_35["N"], row_35["R2"]
+    ]
 })
 
-results_table = results
-results_table.columns = ['Cutoff Estimate', '(Treatment Effect)', 'Std. Error', 'p-Value']
-results_table
+# Set index column
+final_table.set_index("", inplace=True)
+
+# Display styled table
+final_table.style.set_caption("RD Estimates at 3-Star and 3.5-Star Thresholds")
+
 ```
-Neither the 3.0-star nor the 3.5-star cutoff shows a statistically significant effect on the outcome variable, as indicated by the high p-values (> 0.05). The negative effect at 3.0 stars is large in magnitude but imprecise, while the small positive effect at 3.5 stars is also not distinguishable from zero. These results suggest no clear evidence that barely receiving a higher star rating at these thresholds had a meaningful causal effect—though further analysis with larger samples or refined bandwidths may be useful.
+
+At the 3-star threshold, being rounded to 3 stars (versus staying at 2.5) increases market share by approximately 2.4 percentage points (SE = 0.004). At the 3.5-star threshold, the impact is slightly larger at 3.3 percentage points (SE = 0.010). The running score variable is also positively associated with market share at both thresholds, suggesting a continuous relationship between raw rating and market performance.
 {{< pagebreak >}}
 
 #### 7. 
@@ -498,12 +503,37 @@ pivot_df = pd.pivot_table(
 # Optional: Clean column names for readability
 pivot_df.columns.names = ['Metric', 'Cutoff']
 pivot_df
+
+# Filter for 3.0 and 3.5 star thresholds
+df_3 = results_df[results_df['Cutoff'] == 3.0]
+df_35 = results_df[results_df['Cutoff'] == 3.5]
+
+# Plot setup
+plt.figure(figsize=(10, 6))
+
+# Plot 3-star results
+plt.errorbar(df_3['Bandwidth'], df_3['Estimate'], yerr=1.96 * df_3['Std. Error'],
+             fmt='o', label='3-star', color='red', capsize=3)
+
+# Plot 3.5-star results
+plt.errorbar(df_35['Bandwidth'], df_35['Estimate'], yerr=1.96 * df_35['Std. Error'],
+             fmt='o', label='3.5-star', color='green', capsize=3)
+
+# Add plot elements
+plt.axhline(0, color='gray', linestyle='--', linewidth=1)
+plt.title('Treatment Effect by Bandwidth')
+plt.xlabel('Bandwidth')
+plt.ylabel('Estimated Treatment Effect')
+plt.legend(title='Threshold')
+plt.grid(True, linestyle='--', alpha=0.5)
+plt.tight_layout()
+plt.show()
+
 ```
-* No strong or consistent evidence that crossing the 3.0 or 3.5 star thresholds has a significant impact on the outcome (likely enrollment).
 
-* The 3.0-star cutoff results show large negative estimates but high variability, undermining confidence.
+* For the 3.0-star threshold, the treatment effect estimates remain stable and significant across all bandwidths, indicating low sensitivity to bandwidth choice. The narrow and overlapping confidence intervals reinforce the robustness of the estimated effect of rounding to 3 stars.
 
-* The one highly significant p-value (for 3.0 at 0.15) should be interpreted cautiously — it may reflect noise due to the wider bandwidth rather than a true effect.
+* For the 3.5-star threshold, the treatment effect estimates fluctuate more noticeably across bandwidths, suggesting greater sensitivity. The wider confidence intervals, especially at smaller bandwidths, highlight less precision and more uncertainty in the effect of rounding to 3.5 stars.
 
 #### 8.
 ```{python}
@@ -562,6 +592,9 @@ These two histograms show the distribution of raw star ratings around the 3.0 an
 # Step 1: Add binary indicators
 df_2010['is_hmo'] = df_2010['plan_type'].str.contains('HMO', case=False, na=False).astype(int)
 df_2010['has_partd'] = (df_2010['partd'] == 'Yes').astype(int)
+
+df_2010_HMO = df_2010[df_2010["plan_type"] == "HMO/HMOPOS"]
+
 
 # Step 2: Function to check balance
 def covariate_balance(df, cutoff, bandwidth=0.125):
