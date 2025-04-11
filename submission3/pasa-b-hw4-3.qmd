@@ -64,7 +64,6 @@ if 'planid' in df.columns:
         filtered_df = filtered_df[~filtered_df['planid'].astype(str).str.match(r'8\d{2}')]
 
 # Step 4: Filter out prescription drug only plans
-# This is more complex as we need to check multiple conditions
 if all(col in df.columns for col in ['plan_type', 'partd']):
     # Assuming that Part D only plans are marked in plan_type or partd
     pdo_mask = (filtered_df['plan_type'].astype(str).str.contains('Prescription Drug|PDP', case=False, na=False))
