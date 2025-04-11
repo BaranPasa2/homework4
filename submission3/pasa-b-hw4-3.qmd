@@ -28,7 +28,7 @@ All SNPs, 800-series plans, and perscription drug only plans where removed from 
 
 ```{python}
 #| echo: false         
-#| output: false      
+#| output: true      
 #| warning: false     
 #| message: false     
 import pandas as pd
@@ -152,7 +152,7 @@ The number of Medicare Advantage plans per county appears generally sufficient. 
 #### 2. 
 ```{python}
 #| echo: false         
-#| output: false      
+#| output: true      
 #| warning: false     
 #| message: false
 years_to_analyze = [2010, 2012, 2015]
@@ -204,11 +204,12 @@ plt.show()
 As seen above, there are is no star data for the 2012. This highlights difficulties of working with different datasets, the data is not always complete.
 
 Comparing 2010 to 2015, we can see that star rating overall improved. There was an incredibly high number of plans rated 2.5 in 2010, a number which then fell drastically in 2015. In 2015, most plans had a rating of 4.0. It is also worth noting that there were no plans with ratings of 2.0 in 2015, and no plans with ratings of 5.0 in 2010. 
+{{< pagebreak >}}
 
 #### 3. 
 ```{python}
 #| echo: false         
-#| output: false      
+#| output: true      
 #| warning: false     
 #| message: false   
 plt.figure(figsize=(12, 8))
@@ -238,13 +239,21 @@ if 'ma_rate' in df.columns:
                 f'Increase from 2010 to 2015: ${end_value - start_value:.2f} ({percent_increase:.1f}%)',
                 bbox=dict(facecolor='white', alpha=0.8))
         
-        print("\nAverage Benchmark Payment by Year:")
-        for _, row in benchmark_by_year.iterrows():
-            print(f"  {row['year']}: ${row['ma_rate']:.2f}")
-        print(f"\nBenchmark payment increase from 2010 to 2015: ${end_value - start_value:.2f} ({percent_increase:.1f}%)")
-else:
-    plt.text(0.5, 0.5, 'No benchmark payment data found', 
-             horizontalalignment='center', verticalalignment='center')
+        # Step 1: Create a copy of the main table
+        benchmark_table = benchmark_by_year.copy()
+        benchmark_table['Benchmark Payment ($)'] = benchmark_table['ma_rate'].round(2)
+        benchmark_table = benchmark_table[['year', 'Benchmark Payment ($)']]
+
+        # Step 2: Add summary row for 2010–2015 change
+        summary_row = pd.DataFrame([{
+            'year': '2010–2015 Change',
+            'Benchmark Payment ($)': f"${end_value - start_value:.2f} ({percent_increase:.1f}%)"
+        }])
+
+        # Step 3: Append and display
+        benchmark_table = pd.concat([benchmark_table, summary_row], ignore_index=True)
+        benchmark_table.rename(columns={'year': 'Year'}, inplace=True)
+        benchmark_table
 
 plt.tight_layout()
 plt.savefig('benchmark_payment_trend.png', dpi=300)
@@ -259,7 +268,7 @@ In order to assess the overall trend of average benchmark payments, broader year
 #### 4.
 ```{python}
 #| echo: false         
-#| output: false      
+#| output: true      
 #| warning: false     
 #| message: false   
 plt.figure(figsize=(12, 8))
@@ -302,24 +311,12 @@ if all(col in df.columns for col in ['avg_enrollment', 'avg_eligibles']):
                     f'Correlation with benchmark: {correlation:.2f}',
                     bbox=dict(facecolor='white', alpha=0.8))
             
-            print("\nMedicare Advantage Share by Year:")
-            for _, row in ma_share_by_year.iterrows():
-                print(f"  {row['year']}: {row['ma_share'] * 100:.2f}%")
-            
             # Calculate the percentage change from 2010 to 2015 if both values exist
             if 2010 in ma_share_by_year['year'].values and 2015 in ma_share_by_year['year'].values:
                 start_share = ma_share_by_year[ma_share_by_year['year'] == 2010]['ma_share'].values[0] * 100
                 end_share = ma_share_by_year[ma_share_by_year['year'] == 2015]['ma_share'].values[0] * 100
                 share_change = end_share - start_share
                 
-                print(f"\nMA share change from 2010 to 2015: {share_change:.2f}%")
-            
-            print(f"Correlation between MA share and benchmark payment: {correlation:.2f} (p-value: {p_value:.4f})")
-        else:
-            print("Not enough valid data points to calculate correlation")
-else:
-    plt.text(0.5, 0.5, 'No data found for MA share calculation', 
-            horizontalalignment='center', verticalalignment='center')
 
 plt.tight_layout()
 plt.savefig('ma_share_trend.png', dpi=300)
@@ -333,9 +330,11 @@ The graph shows a steady increase in the average Medicare Advantage (MA) share f
 #### 5.
 ```{python}
 #| echo: false         
-#| output: false      
+#| output: true      
 #| warning: false     
-#| message: false   
+#| message: false
+#| results: asis
+   
 from pyfixest.estimation import feols
 
 df_2010 = pd.read_csv('/Users/baranpasa/Library/Mobile Documents/com~apple~CloudDocs/Desktop/Emory/Junior Year/Junior Spring/ECON 470/ECON 470 Python /homework4/data/output/final_ma_data.csv')
@@ -383,6 +382,7 @@ rating_counts = (
 rating_table = rating_counts.reset_index()
 rating_table.columns = ['Star Rating', 'Number of Plans']
 rating_table  # This will render as a markdown table in Quarto
+
 ```
 
 The table above shows the a breakdown of plans rounded up to the nearest half-star rating. Compared to 4.0 rated plans and below, there is a miniscule number, only 50 plans, that could be rounded to 4.5 stars. 
@@ -390,7 +390,7 @@ The table above shows the a breakdown of plans rounded up to the nearest half-st
 #### 6.
 ```{python}
 #| echo: false         
-#| output: false      
+#| output: true      
 #| warning: false     
 #| message: false
 def run_rd(df, cutoff, bandwidth):
@@ -429,17 +429,17 @@ results = pd.DataFrame({
     'p-Value': [pval_3['treat'], pval_3_5['treat']]
 })
 
-print(results)
 results_table = results
 results_table.columns = ['Cutoff Estimate', '(Treatment Effect)', 'Std. Error', 'p-Value']
 results_table
 ```
 Neither the 3.0-star nor the 3.5-star cutoff shows a statistically significant effect on the outcome variable, as indicated by the high p-values (> 0.05). The negative effect at 3.0 stars is large in magnitude but imprecise, while the small positive effect at 3.5 stars is also not distinguishable from zero. These results suggest no clear evidence that barely receiving a higher star rating at these thresholds had a meaningful causal effect—though further analysis with larger samples or refined bandwidths may be useful.
+{{< pagebreak >}}
 
 #### 7. 
 ```{python}
 #| echo: false         
-#| output: false      
+#| output: true      
 #| warning: false     
 #| message: false
 # Run RD at 3.0 and 3.5 cutoffs with different bandwidths
@@ -508,7 +508,7 @@ pivot_df
 #### 8.
 ```{python}
 #| echo: false         
-#| output: false      
+#| output: true      
 #| warning: false     
 #| message: false
 plt.figure(figsize=(12, 5))
@@ -550,13 +550,15 @@ These two histograms show the distribution of raw star ratings around the 3.0 an
 * The distribution appears smoother and more balanced around the 3.5 threshold.
 * There's no obvious discontinuity or bunching just above or below 3.5 —> the frequency of plans seems fairly even across the window.
 * This supports the RD assumption of continuity at 3.5, making it a more credible cutoff for causal inference.
+{{< pagebreak >}}
 
 #### 9.
 ```{python}
 #| echo: false         
-#| output: false      
+#| output: True      
 #| warning: false     
 #| message: false
+
 # Step 1: Add binary indicators
 df_2010['is_hmo'] = df_2010['plan_type'].str.contains('HMO', case=False, na=False).astype(int)
 df_2010['has_partd'] = (df_2010['partd'] == 'Yes').astype(int)
@@ -570,23 +572,31 @@ def covariate_balance(df, cutoff, bandwidth=0.125):
     balance = df_window.groupby('above_cutoff')[['is_hmo', 'has_partd']].mean().T
     balance.columns = ['Below Cutoff', 'Above Cutoff']
     balance['Difference'] = balance['Above Cutoff'] - balance['Below Cutoff']
-    balance['Cutoff'] = cutoff
-    return balance.reset_index().rename(columns={'index': 'Characteristic'})
+    return balance
 
-# Step 3: Combine balance tables
-balance_all = pd.concat([
-    covariate_balance(df_2010, 3.0),
-    covariate_balance(df_2010, 3.5)
-])
+# Step 3: Get balance tables
+balance_3 = covariate_balance(df_2010, cutoff=3.0)
+balance_35 = covariate_balance(df_2010, cutoff=3.5)
 
-# Step 4: Create pivot table
-pivot_table = balance_all.pivot(index='Characteristic', columns='Cutoff')
+# Step 4: Combine and label
+balance_3['Cutoff'] = '3.0'
+balance_35['Cutoff'] = '3.5'
+balance_combined = pd.concat([balance_3, balance_35])
+balance_combined.reset_index(inplace=True)
+balance_combined.rename(columns={'index': 'Characteristic'}, inplace=True)
 
-# Optional: Clean up multi-index column names
-pivot_table.columns = [f'{col[0]} ({col[1]})' for col in pivot_table.columns]
-pivot_table = pivot_table.reset_index()
-
-# Round values for cleaner display
-pivot_table.round(3)
+# Round and return for Quarto to display as markdown table
+balance_combined.round(3)
 ```
 
+
+
+##### 10.
+
+Based on the regression discontinuity results, there is no strong or consistent evidence that crossing the 3.0- or 3.5-star rating thresholds leads to a significant increase in plan enrollments. At the 3.0-star cutoff, the estimated treatment effect is –375.8, while at the 3.5-star cutoff it is 66.3. However, both estimates are statistically insignificant, with p-values of 0.23 and 0.65, respectively. The treatment effects are also not robust across different bandwidths, and the results vary considerably depending on the window used.
+
+The histogram of raw ratings shows noticeable bunching just below the 3.0-star threshold, which suggests potential manipulation or rating inflation. This challenges the RD assumption of continuity around the cutoff and may bias the estimates. In contrast, the distribution around the 3.5-star threshold appears smoother, which is more supportive of a valid RD design.
+
+Covariate balance tests further reveal meaningful imbalances near both thresholds. For example, plans above the 3.5-star cutoff are 29 percentage points more likely to be HMOs, and Part D coverage is lower above both thresholds. These differences indicate that plans just above and below the cutoff are not comparable in key dimensions, again challenging the RD design.
+
+In conclusion, the results suggest that increasing a plan’s star rating from just below to just above a policy threshold does not lead to a statistically significant or robust increase in enrollments. Furthermore, violations of RD assumptions, particularly around the 3.0-star cutoff, limit the strength of causal claims.
