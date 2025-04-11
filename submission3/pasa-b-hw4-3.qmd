@@ -538,6 +538,7 @@ plt.show()
 * For the 3.0-star threshold, the treatment effect estimates remain stable and significant across all bandwidths, indicating low sensitivity to bandwidth choice. The narrow and overlapping confidence intervals reinforce the robustness of the estimated effect of rounding to 3 stars.
 
 * For the 3.5-star threshold, the treatment effect estimates fluctuate more noticeably across bandwidths, suggesting greater sensitivity. The wider confidence intervals, especially at smaller bandwidths, highlight less precision and more uncertainty in the effect of rounding to 3.5 stars.
+{{< pagebreak >}}
 
 #### 8.
 ```{python}
